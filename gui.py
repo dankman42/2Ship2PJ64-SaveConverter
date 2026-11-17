@@ -173,6 +173,7 @@ class App:
         self.go = tk.Button(act, text='Convert save', command=self.convert, font=(TITLE_FONT, 12, 'bold'),
                             bg=C['gold'], fg=C['ink'], activebackground=C['gold_hi'], activeforeground=C['ink'],
                             disabledforeground=mix(C['ink'], C['gold'], 0.55), relief='flat', bd=0,
+                            highlightthickness=0,
                             padx=int(22 * self.s), pady=int(8 * self.s), cursor='hand2')
         self.go.grid(row=0, column=0, sticky='w')
         self.open_btn = self.button(act, 'Open folder', self.open_folder)
@@ -214,7 +215,7 @@ class App:
 
     def button(self, parent, text, cmd):
         return tk.Button(parent, text=text, command=cmd, bg=C['field'], fg=C['fg'], activebackground=C['line'],
-                         activeforeground=C['fg'], relief='flat', bd=0, font=(BODY_FONT, 10),
+                         activeforeground=C['fg'], relief='flat', bd=0, highlightthickness=0, font=(BODY_FONT, 10),
                          padx=int(12 * self.s), pady=int(4 * self.s), cursor='hand2')
 
     def radio(self, parent, text, var, val, cmd):
