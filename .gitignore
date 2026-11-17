@@ -1,0 +1,12 @@
+# Personal save data: never commit
+*.fla
+*.bak
+*.json
+
+# Build output
+build/
+dist/
+*.spec
+*.exe
+__pycache__/
+*.pyc

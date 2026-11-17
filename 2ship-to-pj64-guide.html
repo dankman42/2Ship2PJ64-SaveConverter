@@ -1,0 +1,577 @@
+<title>2Ship to Project64 Saves</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one readable column of numbered steps, with a reference band (flash map, byte order) and troubleshooting after. */
+:root {
+  --bg: #f6f6f9;
+  --surface: #ffffff;
+  --fg: #1d1c26;
+  --muted: #5d5b6e;
+  --line: #dddbe6;
+  --accent: #5a3fc0;
+  --accent-soft: #ece7fb;
+  --code-bg: #f0eff6;
+  --warn: #9a5b00;
+  --warn-soft: #fdf1dc;
+  --ok: #1f7a4d;
+  --f-display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14131b; --surface: #1c1b25; --fg: #e9e7f2; --muted: #a29fb5; --line: #2f2d3c;
+    --accent: #a993ff; --accent-soft: #2a2443; --code-bg: #22202d; --warn: #f0b55a; --warn-soft: #33270f; --ok: #5fd39a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14131b; --surface: #1c1b25; --fg: #e9e7f2; --muted: #a29fb5; --line: #2f2d3c;
+  --accent: #a993ff; --accent-soft: #2a2443; --code-bg: #22202d; --warn: #f0b55a; --warn-soft: #33270f; --ok: #5fd39a;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--f-body); font-size: 16px; line-height: 1.6;
+}
+.wrap {
+  max-width: 760px; margin: 0 auto;
+  padding-block: 48px 80px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 48px;
+}
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; line-height: 1.2; margin: 0; }
+h1 { font-size: 2.1rem; font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 1.4rem; font-weight: 700; }
+h3 { font-size: 1.05rem; font-weight: 500; }
+p { margin: 0; max-width: 65ch; }
+a { color: var(--accent); }
+code, pre, kbd { font-family: var(--f-mono); font-size: 0.88em; }
+code { background: var(--code-bg); padding: 0.1em 0.35em; border-radius: 4px; overflow-wrap: anywhere; }
+.eyebrow { font-family: var(--f-mono); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+header { display: flex; flex-direction: column; gap: 14px; }
+header .lede { color: var(--muted); font-size: 1.08rem; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { font-family: var(--f-mono); font-size: 0.8rem; border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; color: var(--muted); background: var(--surface); }
+section { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+ul, ol { margin: 0; padding-left: 1.3em; display: flex; flex-direction: column; gap: 6px; max-width: 65ch; }
+
+/* steps */
+.steps { list-style: none; padding: 0; counter-reset: step; display: flex; flex-direction: column; gap: 0; max-width: none; }
+.step { counter-increment: step; display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 16px; padding-block: 24px; border-top: 1px solid var(--line); }
+.step:last-child { border-bottom: 1px solid var(--line); }
+.step::before {
+  content: counter(step); font-family: var(--f-display); font-weight: 700; font-size: 1.1rem;
+  width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--accent-soft); color: var(--accent);
+}
+.step-body { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+
+pre.cmd, .script pre {
+  margin: 0; background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px;
+  padding: 12px 14px; overflow-x: auto; line-height: 1.5;
+}
+.out { color: var(--muted); }
+.ok { color: var(--ok); }
+.note { border-left: 3px solid var(--warn); background: var(--warn-soft); padding: 10px 14px; border-radius: 0 6px 6px 0; max-width: 65ch; }
+.note p { color: var(--fg); }
+
+details.script { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+details.script summary { cursor: pointer; padding: 12px 16px; font-weight: 600; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+details.script summary::-webkit-details-marker { display: none; }
+details.script summary .hint { font-weight: 400; color: var(--muted); font-size: 0.9rem; }
+details.script .inner { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 10px; }
+details.script pre { max-height: 420px; font-size: 0.8rem; }
+.btn {
+  font: 500 0.88rem var(--f-body); background: var(--accent); color: var(--surface);
+  border: 0; border-radius: 6px; padding: 7px 14px; cursor: pointer; align-self: flex-start;
+}
+.btn:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.copied { font-size: 0.85rem; color: var(--ok); }
+
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+th { font-family: var(--f-mono); font-size: 0.76rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+td.mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.bytes { display: flex; flex-wrap: wrap; gap: 24px; align-items: center; }
+.byterow { display: flex; gap: 4px; }
+.byte { font-family: var(--f-mono); font-size: 0.9rem; width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 4px; background: var(--surface); }
+.byte.hl { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.bytes .label { font-size: 0.85rem; color: var(--muted); }
+
+.faq { display: flex; flex-direction: column; gap: 18px; }
+.faq div { display: flex; flex-direction: column; gap: 4px; }
+.faq p { color: var(--muted); }
+.faq h3 { color: var(--fg); }
+footer { color: var(--muted); font-size: 0.88rem; border-top: 1px solid var(--line); padding-top: 20px; }
+@media (max-width: 480px) {
+  h1 { font-size: 1.7rem; }
+  .step { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+}
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">Majora's Mask · save conversion</span>
+    <h1>Move a 2Ship2Harkinian save to Project64</h1>
+    <p class="lede">2Ship stores saves as JSON. Project64 expects the 128 KB FlashRAM image the original cartridge used. A small converter rebuilds that image from your JSON, including your owl save, so you can carry on in the emulator.</p>
+    <div class="chips">
+      <span class="chip">US (NTSC-U) ROM only</span>
+      <span class="chip">Project64 3.x</span>
+      <span class="chip">Windows</span>
+      <span class="chip">~5 minutes</span>
+    </div>
+  </header>
+
+  <section>
+    <h2>Before you start</h2>
+    <ul>
+      <li>The converter, <code>2ship-to-pj64.exe</code>. Nothing needs installing. If you'd rather not run an exe, use the Python script at the bottom of this page instead.</li>
+      <li>A <strong>US</strong> Majora's Mask ROM in Project64. The Japanese and European releases arrange their save data differently and won't read this file.</li>
+      <li>Your 2Ship save. It's in the <code>saves</code> folder next to <code>2ship.exe</code>: <code>file1.json</code> is file slot 1 and <code>file2.json</code> is slot 2. The <code>…backup.json</code> files are copies.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Steps</h2>
+    <ol class="steps">
+      <li class="step"><div class="step-body">
+        <h3>Close Project64</h3>
+        <p>While a game is running, Project64 keeps its own copy of the save and writes it back to disk. If it's open while you convert, it can overwrite your new save.</p>
+      </div></li>
+
+      <li class="step"><div class="step-body">
+        <h3>Open the converter and choose your save</h3>
+        <p>Double-click <code>2ship-to-pj64.exe</code> and click <strong>Browse…</strong> next to <strong>Choose your 2Ship save</strong>. Or drag your save onto the exe to open it with the save already chosen.</p>
+        <p>Your saves are in the <code>saves</code> folder next to <code>2ship.exe</code>. <code>file1.json</code> is 2Ship's file slot 1 and <code>file2.json</code> is slot 2. Once you choose one, the converter shows the player name, hearts, masks and whether there's an owl save, so you can check it's the right file.</p>
+        <div class="note"><p><strong>Windows may warn you the first time.</strong> The exe isn't signed, so SmartScreen can show "Windows protected your PC". Click <strong>More info</strong>, then <strong>Run anyway</strong>. Some antivirus programs also flag small packaged Python tools like this one by mistake.</p></div>
+      </div></li>
+
+      <li class="step"><div class="step-body">
+        <h3>Choose where to save it</h3>
+        <p>The quickest way is to write straight into Project64's save file. To find it, open Project64 and go to <strong>Options → Settings → Directories → Native saves</strong>. If that's unset, saves are in the <code>Save</code> folder inside the Project64 install folder.</p>
+        <p>Majora's Mask uses a subfolder named after the ROM, such as <code>ZELDA MAJORA'S MASK-FC392084…</code>. Click <strong>Browse…</strong> next to <strong>Choose where to save it</strong> and pick the <code>ZELDA MAJORA'S MASK.fla</code> inside that subfolder.</p>
+        <p>If the subfolder doesn't exist yet, start the game once, create a throwaway file on the file select screen so the game saves, then close Project64. Or save the new file anywhere for now and copy it into that subfolder later.</p>
+        <p>Leave the format on <strong>Project64 format</strong>. The other option writes cartridge byte order for emulators like mupen64plus or Ares.</p>
+      </div></li>
+
+      <li class="step"><div class="step-body">
+        <h3>Choose a file slot</h3>
+        <p>Pick <strong>Slot 1</strong> or <strong>Slot 2</strong>. Each card shows what that slot holds now, so you can see what you'd replace. The converter asks before replacing a slot that already has a save.</p>
+        <p>With <strong>Keep the other slot from the existing file</strong> ticked, only the slot you pick changes. <strong>Back up the existing file first</strong> saves a dated <code>.bak</code> copy next to it before anything is written.</p>
+      </div></li>
+
+      <li class="step"><div class="step-body">
+        <h3>Convert and play</h3>
+        <p>Click <strong>Convert save</strong>, then start Majora's Mask in Project64. Your file is in the slot you chose. If you had an owl save, the file select screen shows it, and loading it deletes it just like on the original cartridge. Otherwise you start from your last Song of Time save.</p>
+      </div></li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>What carries over</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Data</th><th>Converted?</th></tr></thead>
+        <tbody>
+          <tr><td>Items, masks, songs, heart pieces, wallet, upgrades</td><td>Yes</td></tr>
+          <tr><td>Bombers' Notebook, scene flags, owl statues, minigame high scores</td><td>Yes</td></tr>
+          <tr><td>Owl save (day, time, location, pictograph photo, bottle timers)</td><td>Yes</td></tr>
+          <tr><td>Song of Time save (the one you reset to)</td><td>Yes</td></tr>
+          <tr><td>D-pad item assignments, playtime, file creation date</td><td>No. These are 2Ship-only and the original game has nowhere to store them.</td></tr>
+          <tr><td>2Ship enhancement or randomizer state</td><td>No</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>How the file is laid out</h2>
+    <p>The output is the same 128 KB FlashRAM image the US cartridge writes. Every save is written twice, because the game falls back to the backup copy if a checksum fails.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Offset</th><th>Size</th><th>Contents</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">0x00000</td><td class="mono">0x100C</td><td>File 1 Song of Time save</td></tr>
+          <tr><td class="mono">0x02000</td><td class="mono">0x100C</td><td>File 1 Song of Time save (backup)</td></tr>
+          <tr><td class="mono">0x04000</td><td class="mono">0x100C</td><td>File 2 Song of Time save, plus backup at 0x06000</td></tr>
+          <tr><td class="mono">0x08000</td><td class="mono">0x3CA0</td><td>File 1 owl save</td></tr>
+          <tr><td class="mono">0x0C000</td><td class="mono">0x3CA0</td><td>File 1 owl save (backup)</td></tr>
+          <tr><td class="mono">0x10000</td><td class="mono">0x3CA0</td><td>File 2 owl save, plus backup at 0x14000</td></tr>
+          <tr><td class="mono">0x18000</td><td class="mono">0x0006</td><td>Options header (<code>0xA51D</code>, language, sound), plus backup at 0x1C000</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Each save starts with the text <code>ZELDA3</code> 0x24 bytes in. Its checksum is a plain 16-bit sum of every byte in the save, worked out with the checksum field set to zero.</p>
+    <div class="note"><p><strong>Why the checksums differ from 2Ship's.</strong> 2Ship's checksum also covers its own extras (playtime, D-pad items), which the original game doesn't store. The converter writes the checksum the original game checks, so a mismatch with the number in the JSON is expected.</p></div>
+
+    <h3>Why there are two output files</h3>
+    <p>The N64 is big-endian. Project64 stores FlashRAM with each 4-byte word reversed, so the same bytes look different on disk:</p>
+    <div class="bytes">
+      <div><div class="byterow"><span class="byte hl">5A</span><span class="byte">45</span><span class="byte">4C</span><span class="byte">44</span></div><span class="label">Cartridge order: "ZELD"</span></div>
+      <div><div class="byterow"><span class="byte">44</span><span class="byte">4C</span><span class="byte">45</span><span class="byte hl">5A</span></div><span class="label">Project64 order: "DLEZ"</span></div>
+    </div>
+    <p>Use <code>ZELDA MAJORA'S MASK.fla</code> for Project64. The <code>.bigendian.fla</code> copy is in cartridge order, for emulators such as mupen64plus or Ares, or for flash cart tools.</p>
+  </section>
+
+  <section>
+    <h2>Troubleshooting</h2>
+    <div class="faq">
+      <div><h3>The file slot is empty</h3><p>Check the ROM is the US version, and that the file is named exactly <code>ZELDA MAJORA'S MASK.fla</code> in the subfolder Project64 actually uses. If unsure, save once in-game, see which file Project64 changes, and put yours in its place.</p></div>
+      <div><h3>The file was replaced by an old save</h3><p>Project64 was probably still running when you copied the file in, and wrote over it on exit. Close it fully and copy the file again.</p></div>
+      <div><h3>"A device which does not exist was specified" when copying</h3><p>Your save folder is inside OneDrive, and OneDrive isn't syncing. Resume sync or restart OneDrive from the tray icon, then try again. If you renamed a backup there while OneDrive was stuck, check it's still there afterwards, or check the OneDrive recycle bin.</p></div>
+      <div><h3>The script stops with an AssertionError</h3><p>The save's structure doesn't match what the script expects. This can happen with a much older or newer 2Ship save format. Check that <code>"type"</code> at the bottom of the JSON says <code>2S2H_SAVE</code>. This guide was written against format <code>version 7</code>.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Python alternative</h2>
+    <p>The exe is this script packaged with Python. If you'd rather run the script yourself, install Python 3 from python.org, save the script below as <code>convert.py</code>, and run:</p>
+    <pre class="cmd">python convert.py "C:\path\to\2Ship2Harkinian\saves\file1.json"</pre>
+    <p>Add <code>--file 2</code> to force file slot 2, or add an output path after the save to write somewhere else.</p>
+        <details class="script" id="script-box">
+          <summary>convert.py <span class="hint">about 310 lines · click to show</span></summary>
+          <div class="inner">
+            <button class="btn" type="button" id="copy-script">Copy script</button>
+            <span class="copied" id="copy-status" hidden></span>
+            <pre id="script-src">"""Convert a 2Ship2Harkinian JSON save (file1.json) into an N64 Majora's Mask (US) FlashRAM image.
+
+Usage:
+  python convert.py &lt;input.json&gt; [&lt;output.fla&gt;] [--file 1|2]
+
+Without an output path, "ZELDA MAJORA'S MASK.fla" is written next to the input file.
+The slot defaults to the number in the file name (file2.json -&gt; slot 2), otherwise slot 1.
+The 2ship-to-pj64 app (gui.py) uses the same code and can also merge into an existing save file.
+Writes the image in Project64's word-swapped byte order (and a big-endian copy next to it).
+"""
+import json, os, re, shutil, struct, sys, time
+
+def u8(v): return struct.pack('&gt;B', v &amp; 0xFF)
+def s8(v): return struct.pack('&gt;b', v)
+def u16(v): return struct.pack('&gt;H', v &amp; 0xFFFF)
+def s16(v): return struct.pack('&gt;h', v)
+def u32(v): return struct.pack('&gt;I', v &amp; 0xFFFFFFFF)
+def s32(v): return struct.pack('&gt;i', v)
+def u64(v): return struct.pack('&gt;Q', v &amp; 0xFFFFFFFFFFFFFFFF)
+def chars(lst): return bytes(c &amp; 0xFF for c in lst)
+
+
+def player_data(p):
+    b = chars(p['newf']) + u16(p['threeDayResetCount']) + chars(p['playerName'])
+    b += s16(p['healthCapacity']) + s16(p['health']) + s8(p['magicLevel']) + s8(p['magic'])
+    b += s16(p['rupees']) + u16(p['swordHealth']) + u16(p['tatlTimer'])
+    b += u8(p['isMagicAcquired']) + u8(p['isDoubleMagicAcquired']) + u8(p['doubleDefense']) + u8(p['unk_1F'])
+    b += u8(p['unk_20']) + b'\0' + u16(p['owlActivationFlags']) + u8(p['unk_24']) + b'\0' + s16(p['savedSceneId'])
+    assert len(b) == 0x28
+    return b
+
+
+def equips(e):
+    b = b''.join(chars(r) for r in e['buttonItems']) + b''.join(chars(r) for r in e['cButtonSlots'])
+    b += u16(e['equipment'])
+    assert len(b) == 0x22
+    return b
+
+
+def inventory(i):
+    b = chars(i['items']) + b''.join(s8(a) for a in i['ammo'])
+    b += u32(i['upgrades']) + u32(i['questItems']) + chars(i['dungeonItems'])
+    b += b''.join(s8(k) for k in i['dungeonKeys']) + s8(i['defenseHearts'])
+    b += b''.join(s8(f) for f in i['strayFairies'])
+    b += b''.join(chars(n) for n in i['dekuPlaygroundPlayerName'])
+    b += b'\0\0'  # pad to 0x88
+    assert len(b) == 0x88, hex(len(b))
+    return b
+
+
+def save_info(s):
+    b = player_data(s['playerData'])
+    b += equips(s['equips']) + b'\0\0'  # 0x22 bytes + pad so Inventory starts at 0x4C
+    b += inventory(s['inventory'])
+    assert len(b) == 0xD4
+    for f in s['permanentSceneFlags']:
+        for k in ('chest', 'switch0', 'switch1', 'clearedRoom', 'collectible', 'unk_14', 'rooms'):
+            b += u32(f[k])
+    assert len(b) == 0xDF4
+    b += chars(s['unk_DF4'])
+    b += b''.join(u32(x) for x in s['dekuPlaygroundHighScores'])
+    b += u32(s['pictoFlags0']) + u32(s['pictoFlags1']) + u32(s['unk_E5C']) + u32(s['unk_E60'])
+    b += b''.join(u32(x) for x in s['unk_E64'])
+    b += b''.join(u32(x) for x in s['scenesVisible'])
+    b += u32(s['skullTokenCount']) + u32(s['unk_EA0']) + u32(s['unk_EA4'])
+    b += b''.join(u32(x) for x in s['unk_EA8'])
+    b += u32(s['stolenItems']) + u32(s['unk_EB4'])
+    b += b''.join(u32(x) for x in s['highScores'])
+    assert len(b) == 0xED4, hex(len(b))
+    b += chars(s['weekEventReg'])
+    b += u32(s['regionsVisited']) + u32(s['worldMapCloudVisibility'])
+    assert len(b) == 0xF40
+    b += u8(s['unk_F40']) + u8(s['scarecrowSpawnSongSet']) + chars(s['scarecrowSpawnSong'])
+    b += s8(s['bombersCaughtNum']) + b''.join(s8(x) for x in s['bombersCaughtOrder'])
+    b += b''.join(b''.join(s8(x) for x in row) for row in s['lotteryCodes'])
+    b += b''.join(s8(x) for x in s['spiderHouseMaskOrder'])
+    b += b''.join(s8(x) for x in s['bomberCode'])
+    assert len(b) == 0xFDC
+    h = s['horseData']
+    b += s16(h['sceneId']) + s16(int(h['pos']['x'])) + s16(int(h['pos']['y'])) + s16(int(h['pos']['z'])) + s16(h['yaw'])
+    b += u16(0)  # checksum placeholder
+    assert len(b) == 0xFE8
+    return b
+
+
+def save(sv):
+    b = s32(sv['entrance']) + u8(sv['equippedMask']) + u8(sv['isFirstCycle']) + u8(sv['unk_06']) + u8(sv['linkAge'])
+    b += s32(sv['cutsceneIndex']) + u16(sv['time']) + u16(sv['owlSaveLocation'])
+    b += s32(sv['isNight']) + s32(sv['timeSpeedOffset']) + s32(sv['day']) + s32(sv['eventDayCount'])
+    b += u8(sv['playerForm']) + u8(sv['snowheadCleared']) + u8(sv['hasTatl']) + u8(sv['isOwlSave'])
+    assert len(b) == 0x24
+    b += save_info(sv['saveInfo'])
+    assert len(b) == 0x100C
+    return bytearray(b)
+
+
+def owl_context(o):
+    b = save(o['save'])
+    b += chars(o['eventInf']) + u8(o['unk_1014']) + u8(o['bButtonStatus']) + u16(o['jinxTimer'])
+    b += s16(o['rupeeAccumulator']) + chars(o['bottleTimerStates'])
+    assert len(b) == 0x1020
+    for k in ('bottleTimerStartOsTimes', 'bottleTimerTimeLimits', 'bottleTimerCurTimes', 'bottleTimerPausedOsTimes'):
+        b += b''.join(u64(x) for x in o[k])
+    assert len(b) == 0x10E0
+    b += chars(o['pictoPhotoI5'])
+    assert len(b) == 0x3CA0, hex(len(b))
+    return b
+
+
+CHECKSUM_OFS = 0x24 + 0xFE6
+FLASH_SIZE = 0x20000
+OUT_NAME = "ZELDA MAJORA'S MASK.fla"
+OPTIONS_OFS = (0x18000, 0x1C000)
+OPTIONS_ID = b'\xA5\x1D'
+# Per slot: the Song of Time save (main + backup copy, 0x4000 bytes) and the owl save (main + backup, 0x8000 bytes)
+NEW_CYCLE_OFS = {1: 0x0000, 2: 0x4000}
+OWL_OFS = {1: 0x8000, 2: 0x10000}
+
+
+def finalize(buf):
+    """Write the game's checksum (16-bit byte sum, computed with the field zeroed). Returns it."""
+    buf[CHECKSUM_OFS:CHECKSUM_OFS + 2] = b'\0\0'
+    c = sum(buf) &amp; 0xFFFF
+    buf[CHECKSUM_OFS:CHECKSUM_OFS + 2] = u16(c)
+    return c
+
+
+def word_swap(data):
+    """Reverse every 4-byte word. Converts between cartridge order and Project64's order (both directions)."""
+    out = bytearray(len(data))
+    for i in range(0, len(data) - len(data) % 4, 4):
+        out[i:i + 4] = data[i:i + 4][::-1]
+    return out
+
+
+def load_save(path):
+    with open(path, encoding='utf-8') as f:
+        d = json.load(f)
+    if not isinstance(d, dict) or d.get('type') != '2S2H_SAVE':
+        raise ValueError('this is not a 2Ship2Harkinian save file')
+    return d
+
+
+def slot_from_filename(path):
+    """file2.json / file2backup.json -&gt; 2, anything else -&gt; 1."""
+    m = re.match(r'file([12])', os.path.basename(path), re.I)
+    return int(m.group(1)) if m else 1
+
+
+# ---- reading names and stats, for showing what's in a save ----
+
+def decode_name(raw):
+    s = ''
+    for c in raw:
+        if c &lt;= 0x09: s += chr(ord('0') + c)
+        elif c &lt;= 0x23: s += chr(ord('A') + c - 0x0A)
+        elif c &lt;= 0x3D: s += chr(ord('a') + c - 0x24)
+        elif c == 0x3E: s += ' '
+        elif c == 0x40: s += '.'
+        elif c == 0x3F: s += '-'
+        else: s += '?'
+    return s.strip() or '(no name)'
+
+
+def describe_json(d):
+    """Short facts about a 2Ship save, for the preview panel."""
+    owl = d.get('owlSave')
+    has_owl = bool(owl and owl['save'].get('isOwlSave'))
+    # Describe the save the player will actually load: the owl save if there is one.
+    cur = owl['save'] if has_owl else d['newCycleSave']['save']
+    p = cur['saveInfo']['playerData']
+    inv = cur['saveInfo']['inventory']
+    info = {
+        'name': decode_name(p['playerName']),
+        'hearts': p['healthCapacity'] / 16,
+        'masks': sum(1 for x in inv['items'][24:48] if x != 255),
+        'rupees': p['rupees'],
+        'cycles': p['threeDayResetCount'],
+        'owl': has_owl,
+    }
+    if has_owl:
+        s = owl['save']
+        mins = s['time'] * 24 * 60 // 0x10000
+        info['owl_day'] = s['day']
+        info['owl_time'] = f'{mins // 60:02d}:{mins % 60:02d}'
+    return info
+
+
+def to_native(raw, assume_pj64=True):
+    """Return (cartridge-order flash image, detected format) for an existing .fla file."""
+    data = bytearray(raw[:FLASH_SIZE]) + bytearray(max(0, FLASH_SIZE - len(raw)))
+    swapped = word_swap(data)
+    for ofs in OPTIONS_OFS + (0x24, 0x4024, 0x8024, 0x10024):
+        if data[ofs:ofs + 2] == OPTIONS_ID or data[ofs:ofs + 6] == b'ZELDA3':
+            return data, 'big-endian'
+        if swapped[ofs:ofs + 2] == OPTIONS_ID or swapped[ofs:ofs + 6] == b'ZELDA3':
+            return swapped, 'project64'
+    return (swapped, 'project64') if assume_pj64 else (data, 'big-endian')
+
+
+def describe_flash(native):
+    """What each slot of a cartridge-order flash image holds: {1: str, 2: str}."""
+    out = {}
+    for slot in (1, 2):
+        parts = []
+        for ofs, kind in ((NEW_CYCLE_OFS[slot], ''), (OWL_OFS[slot], 'owl')):
+            for copy in (0, 0x2000 if not kind else 0x4000):
+                base = ofs + copy
+                if native[base + 0x24:base + 0x2A] == b'ZELDA3':
+                    name = decode_name(native[base + 0x2C:base + 0x34])
+                    parts.append(f'{name}, owl save' if kind else name)
+                    break
+        if not parts:
+            out[slot] = 'empty'
+        elif len(parts) == 2 and parts[1].startswith(parts[0]):
+            out[slot] = parts[1]
+        else:
+            out[slot] = parts[0]
+    return out
+
+
+# ---- building and writing ----
+
+def build_slot(d, flash, slot):
+    """Write save `d` into `flash` (cartridge order) at `slot`, replacing whatever was there. Returns checksums."""
+    if slot not in (1, 2):
+        raise ValueError('file slot must be 1 or 2')
+    nc_ofs, owl_ofs = NEW_CYCLE_OFS[slot], OWL_OFS[slot]
+    flash[nc_ofs:nc_ofs + 0x4000] = bytes(0x4000)
+    flash[owl_ofs:owl_ofs + 0x8000] = bytes(0x8000)
+
+    nc = d['newCycleSave']['save']
+    ncb = save(nc)
+    sums = {'new-cycle save': (finalize(ncb), nc['saveInfo']['checksum'])}
+    flash[nc_ofs:nc_ofs + len(ncb)] = ncb
+    flash[nc_ofs + 0x2000:nc_ofs + 0x2000 + len(ncb)] = ncb
+
+    o = d.get('owlSave')
+    if o and o['save'].get('isOwlSave'):
+        ob = owl_context(o)
+        sums['owl save'] = (finalize(ob), o['save']['saveInfo']['checksum'])
+        flash[owl_ofs:owl_ofs + len(ob)] = ob
+        flash[owl_ofs + 0x4000:owl_ofs + 0x4000 + len(ob)] = ob
+
+    for ofs in OPTIONS_OFS:
+        if flash[ofs:ofs + 2] != OPTIONS_ID:
+            flash[ofs:ofs + 6] = OPTIONS_ID + u8(1) + u8(0) + u8(0) + u8(0)
+    return sums
+
+
+def write_flash(d, dst, slot, pj64=True, merge=True, backup=True, bigendian_copy=False):
+    """Convert save `d` into slot `slot` of `dst`. Returns a dict describing what happened."""
+    result = {'path': dst, 'backup': None, 'merged': False, 'extra': None}
+    flash = bytearray(FLASH_SIZE)
+    if os.path.exists(dst):
+        with open(dst, 'rb') as f:
+            raw = f.read()
+        if backup:
+            stamp = time.strftime('%Y-%m-%d_%H%M%S')
+            result['backup'] = f'{dst}.{stamp}.bak'
+            n = 2
+            while os.path.exists(result['backup']):
+                result['backup'] = f'{dst}.{stamp}-{n}.bak'
+                n += 1
+            shutil.copy2(dst, result['backup'])
+        if merge:
+            flash, _ = to_native(raw, assume_pj64=pj64)
+            result['merged'] = True
+    result['checksums'] = build_slot(d, flash, slot)
+    with open(dst, 'wb') as f:
+        f.write(word_swap(flash) if pj64 else flash)
+    if bigendian_copy:
+        result['extra'] = dst.rsplit('.', 1)[0] + '.bigendian.fla'
+        with open(result['extra'], 'wb') as f:
+            f.write(flash)
+    result['slots'] = describe_flash(flash)
+    return result
+
+
+def main():
+    """Command line: python convert.py &lt;input.json&gt; [&lt;output.fla&gt;] [--file 1|2]"""
+    args = sys.argv[1:]
+    slot = None
+    if '--file' in args:
+        i = args.index('--file'); slot = int(args[i + 1]); del args[i:i + 2]
+    if not args:
+        print(__doc__)
+        sys.exit(2)
+    src = args[0]
+    dst = args[1] if len(args) &gt; 1 else os.path.join(os.path.dirname(os.path.abspath(src)), OUT_NAME)
+    slot = slot or slot_from_filename(src)
+    try:
+        d = load_save(src)
+        print(f'Converting {src}  -&gt;  file slot {slot}')
+        r = write_flash(d, dst, slot, merge=False, backup=False, bigendian_copy=True)
+    except Exception as e:
+        print(f'Conversion failed: {e!r}')
+        sys.exit(1)
+    for label, (mine, theirs) in r['checksums'].items():
+        print(f'{label}: checksum {mine} (2Ship stored {theirs})')
+    print('Wrote', r['path'])
+    print('  and', r['extra'])
+
+
+if __name__ == '__main__':
+    main()
+</pre>
+          </div>
+        </details>
+  </section>
+
+  <footer>Struct layout comes from the zeldaret/mm decompilation (<code>z64save.h</code>, <code>z_sram_NES.c</code>), US version.</footer>
+</div>
+
+<script>
+(function () {
+  var btn = document.getElementById('copy-script');
+  var status = document.getElementById('copy-status');
+  var src = document.getElementById('script-src');
+  function selectText() {
+    var r = document.createRange(); r.selectNodeContents(src);
+    var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+  }
+  function show(msg) { status.textContent = msg; status.hidden = false; }
+  btn.addEventListener('click', function () {
+    var text = src.textContent;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { show('Copied to clipboard.'); })
+        .catch(function () { selectText(); show('Copy was blocked here. The script is selected, so press Ctrl+C.'); });
+    } else { selectText(); show('The script is selected. Press Ctrl+C to copy it.'); }
+  });
+})();
+</script>
