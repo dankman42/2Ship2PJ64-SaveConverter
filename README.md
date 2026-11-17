@@ -6,9 +6,14 @@ Move your **Majora's Mask** save from [2Ship2Harkinian](https://github.com/Harbo
 
 ## Download
 
-Get `2ship-to-pj64.exe` from the [latest release](../../releases/latest). Nothing needs installing.
+Get it from the [latest release](../../releases/latest). Nothing needs installing.
 
-Windows SmartScreen may say "Windows protected your PC" because the exe isn't signed. Click **More info**, then **Run anyway**. If you'd rather not run an exe, use the Python script instead (see [Command line](#command-line)).
+- **Windows:** `2ship-to-pj64.exe`. SmartScreen may say "Windows protected your PC" because the exe isn't signed. Click **More info**, then **Run anyway**.
+- **Linux (x86-64):** `2ship-to-pj64-linux-x86_64`. Make it executable with `chmod +x 2ship-to-pj64-linux-x86_64`, then run it. It runs on distros from Ubuntu 22.04 / Debian 12 onward.
+
+If you'd rather not run a downloaded binary, use the Python script instead (see [Command line](#command-line)).
+
+On Linux the converter defaults to cartridge byte order, which is what mupen64plus-based emulators (RMG, simple64) and Ares use. Choose **Project64 format** if you play Project64 through Wine.
 
 ## How to use it
 
@@ -46,9 +51,12 @@ Writes `ZELDA MAJORA'S MASK.fla` (Project64 byte order) and `ZELDA MAJORA'S MASK
 
 To run the window from source: `python gui.py`.
 
-## Building the exe
+## Building
 
-Install Python 3 and PyInstaller (`pip install pyinstaller`), then run `build.bat`. It regenerates the icon with `make_icon.py` and writes `2ship-to-pj64.exe`.
+- **Windows:** install Python 3 and PyInstaller (`pip install pyinstaller`), then run `build.bat`. It writes `2ship-to-pj64.exe`.
+- **Linux:** install Python 3 with Tk (`sudo apt install python3-tk python3-venv` on Debian/Ubuntu), then run `./build.sh`. It writes `2ship-to-pj64-linux-x86_64`.
+
+Pushing a tag like `v1.2.0` builds both in GitHub Actions and attaches them to that release.
 
 ## How it works
 

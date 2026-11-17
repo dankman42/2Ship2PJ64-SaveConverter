@@ -20,6 +20,19 @@ C = {
 }
 TITLE_FONT = 'Georgia'
 BODY_FONT = 'Segoe UI'
+IS_WINDOWS = sys.platform.startswith('win')
+SAVE_HINT = 'Usually %s in your 2Ship2Harkinian folder.' % os.path.join('saves', 'file1.json')
+OUT_HINT = ("To import directly, pick the .fla in Project64's save folder (Options → Settings → Directories)."
+            if IS_WINDOWS else "To import directly, pick your emulator's existing Majora's Mask .fla save file.")
+
+
+def pick_fonts(root):
+    """Use Georgia / Segoe UI where installed (Windows), otherwise the closest common Linux fonts."""
+    global TITLE_FONT, BODY_FONT
+    from tkinter import font
+    fams = set(font.families(root))
+    TITLE_FONT = next((f for f in ('Georgia', 'DejaVu Serif', 'Liberation Serif', 'Noto Serif', 'FreeSerif') if f in fams), 'Times')
+    BODY_FONT = next((f for f in ('Segoe UI', 'Noto Sans', 'DejaVu Sans', 'Liberation Sans', 'Cantarell', 'FreeSans') if f in fams), 'Helvetica')
 
 
 def resource(name):
@@ -122,18 +135,18 @@ class App:
         self.in_var = tk.StringVar()
         self.out_var = tk.StringVar()
         self.slot_var = tk.IntVar(value=1)
-        self.fmt_var = tk.StringVar(value='project64')
+        self.fmt_var = tk.StringVar(value='project64' if IS_WINDOWS else 'big-endian')
         self.merge_var = tk.BooleanVar(value=True)
         self.backup_var = tk.BooleanVar(value=True)
 
         r = 0
         r = self.heading(body, r, '1', 'Choose your 2Ship save')
         r = self.path_row(body, r, self.in_var, self.browse_in, 'in_entry')
-        self.in_info = self.info_label(body, r, 'Usually saves\\file1.json in your 2Ship2Harkinian folder.'); r += 1
+        self.in_info = self.info_label(body, r, SAVE_HINT); r += 1
 
         r = self.heading(body, r, '2', 'Choose where to save it')
         r = self.path_row(body, r, self.out_var, self.browse_out, 'out_entry')
-        self.out_info = self.info_label(body, r, "To import directly, pick the .fla in Project64's save folder (Options → Settings → Directories)."); r += 1
+        self.out_info = self.info_label(body, r, OUT_HINT); r += 1
         fmt = tk.Frame(body, bg=C['bg']); fmt.grid(row=r, column=0, sticky='w', pady=(2, 0)); r += 1
         for val, label in (('project64', 'Project64 format'), ('big-endian', 'Other emulators (cartridge byte order)')):
             self.radio(fmt, label, self.fmt_var, val, self.refresh_output).pack(side='left', padx=(0, 18))
@@ -248,7 +261,7 @@ class App:
         p = self.in_var.get().strip().strip('"')
         self.save = None
         if not p:
-            self.in_info.config(text='Usually saves\\file1.json in your 2Ship2Harkinian folder.', fg=C['muted'])
+            self.in_info.config(text=SAVE_HINT, fg=C['muted'])
         elif not os.path.isfile(p):
             self.in_info.config(text="That file doesn't exist.", fg=C['err'])
         else:
@@ -261,7 +274,7 @@ class App:
                 text += f"\nOwl save on Day {i['owl_day']}, {i['owl_time']} is included." if i['owl'] else '\nNo owl save. You\'ll start from your last Song of Time save.'
                 self.in_info.config(text=text, fg=C['ok'])
             except Exception:
-                self.in_info.config(text="This isn't a 2Ship Majora's Mask save. Choose saves\\file1.json or file2.json.", fg=C['err'])
+                self.in_info.config(text="This isn't a 2Ship Majora's Mask save. Choose saves/file1.json or file2.json.", fg=C['err'])
         self.paint_slots()
 
     # ---- output ----
@@ -294,7 +307,7 @@ class App:
             self.out_info.config(text='A new save file will be created.' if ok else "That folder doesn't exist.",
                                  fg=C['muted'] if ok else C['err'])
         else:
-            self.out_info.config(text="To import directly, pick the .fla in Project64's save folder (Options → Settings → Directories).", fg=C['muted'])
+            self.out_info.config(text=OUT_HINT, fg=C['muted'])
         state = 'normal' if self.out_native is not None else 'disabled'
         self.merge_cb.config(state=state)
         self.backup_cb.config(state=state)
@@ -353,7 +366,11 @@ class App:
 
     def open_folder(self):
         try:
-            os.startfile(self.last_dir)
+            if IS_WINDOWS:
+                os.startfile(self.last_dir)
+            else:
+                import subprocess
+                subprocess.Popen(['open' if sys.platform == 'darwin' else 'xdg-open', self.last_dir])
         except Exception:
             pass
 
@@ -365,6 +382,7 @@ def main():
     except Exception:
         pass
     root = tk.Tk()
+    pick_fonts(root)
     App(root, sys.argv[1] if len(sys.argv) > 1 else None)
     root.mainloop()
 

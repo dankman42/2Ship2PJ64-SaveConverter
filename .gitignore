@@ -10,3 +10,5 @@ dist/
 *.exe
 __pycache__/
 *.pyc
+.venv/
+2ship-to-pj64-linux-x86_64
