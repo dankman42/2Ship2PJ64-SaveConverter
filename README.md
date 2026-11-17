@@ -1,4 +1,4 @@
-# Ship to PJ64 Save Converter
+# 2Ship2PJ64 Save Converter
 
 Move your **Majora's Mask** save from [2Ship2Harkinian](https://github.com/HarbourMasters/2ship2harkinian) into **Project64** (or another N64 emulator) and carry on playing.
 
